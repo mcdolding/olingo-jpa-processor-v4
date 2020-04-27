@@ -5,6 +5,9 @@ import java.util.List;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
 
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
+import com.vividsolutions.jts.io.WKTReader;
 import org.apache.olingo.commons.api.edm.EdmType;
 import org.apache.olingo.commons.api.http.HttpStatusCode;
 import org.apache.olingo.server.api.ODataApplicationException;
@@ -24,7 +27,7 @@ import com.sap.olingo.jpa.processor.core.exception.ODataJPAProcessorException;
 /**
  * Handle OData Functions that are implemented e.g. as user defined data base functions. This will be mapped
  * to JPA criteria builder function().
- * 
+ *
  * @author Oliver Grande
  *
  */
@@ -34,7 +37,7 @@ final class JPAFunctionOperator implements JPAOperator {
   private final List<UriParameter> uriParams;
 
   public JPAFunctionOperator(final JPAVisitor jpaVisitor, final List<UriParameter> uriParams,
-      final JPADataBaseFunction jpaFunction) {
+                             final JPADataBaseFunction jpaFunction) {
 
     super();
     this.uriParams = uriParams;
@@ -47,13 +50,13 @@ final class JPAFunctionOperator implements JPAOperator {
 
     if (jpaFunction.getResultParameter().isCollection()) {
       throw new ODataJPAFilterException(ODataJPAFilterException.MessageKeys.NOT_SUPPORTED_FUNCTION_COLLECTION,
-          HttpStatusCode.NOT_IMPLEMENTED);
+              HttpStatusCode.NOT_IMPLEMENTED);
     }
 
     if (!JPATypeConvertor.isScalarType(
-        jpaFunction.getResultParameter().getType())) {
+            jpaFunction.getResultParameter().getType())) {
       throw new ODataJPAFilterException(ODataJPAFilterException.MessageKeys.NOT_SUPPORTED_FUNCTION_NOT_SCALAR,
-          HttpStatusCode.NOT_IMPLEMENTED);
+              HttpStatusCode.NOT_IMPLEMENTED);
     }
 
     final CriteriaBuilder cb = visitor.getCriteriaBuilder();
@@ -68,10 +71,25 @@ final class JPAFunctionOperator implements JPAOperator {
       // a. $it/Area b. Area c. 10000
       final UriParameter p = findUriParameter(parameters.get(i));
 
+      // MCD Need to convert spatial function parameters to WKB
+      final String GEOGRAPHY_PREFIX = "geography'SRID=4326;";
       if (p != null && p.getText() != null) {
-        final JPALiteralOperator operator = new JPALiteralOperator(visitor.getOdata(), new ParameterLiteral(p
-            .getText()));
-        jpaParameter[i] = cb.literal(operator.get(parameters.get(i)));
+        String text = p.getText();
+        if (text.startsWith(GEOGRAPHY_PREFIX) &&
+                org.apache.olingo.commons.api.edm.geo.Geospatial.class.isAssignableFrom(parameters.get(i).getType())) {
+          text = text.substring(GEOGRAPHY_PREFIX.length(), text.length()-1);
+          WKTReader reader = new WKTReader(new GeometryFactory(new PrecisionModel(),4326));
+          try {
+            jpaParameter[i] = cb.literal(reader.read(text));
+          } catch (Exception e){
+            throw new ODataJPAProcessorException(e, HttpStatusCode.INTERNAL_SERVER_ERROR);
+          }
+
+        } else {
+          final JPALiteralOperator operator = new JPALiteralOperator(visitor.getOdata(), new ParameterLiteral(text));
+          jpaParameter[i] = cb.literal(operator.get(parameters.get(i)));
+        }
+
       } else {
         try {
           jpaParameter[i] = (Expression<?>) p.getExpression().accept(visitor).get();

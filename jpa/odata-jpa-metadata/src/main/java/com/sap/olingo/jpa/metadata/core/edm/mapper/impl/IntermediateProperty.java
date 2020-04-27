@@ -54,7 +54,7 @@ import com.sap.olingo.jpa.metadata.core.edm.mapper.extention.IntermediatePropert
  *
  */
 abstract class IntermediateProperty extends IntermediateModelElement implements IntermediatePropertyAccess,
-    JPAAttribute {
+        JPAAttribute {
 
   private static final String DB_FIELD_NAME_PATTERN = "\"&1\"";
   protected final Attribute<?, ?> jpaAttribute;
@@ -72,7 +72,7 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
   private List<String> fieldGroups;
 
   public IntermediateProperty(final JPAEdmNameBuilder nameBuilder, final Attribute<?, ?> jpaAttribute,
-      final IntermediateSchema schema) throws ODataJPAModelException {
+                              final IntermediateSchema schema) throws ODataJPAModelException {
     super(nameBuilder, IntNameBuilder.buildAttributeName(jpaAttribute));
     this.jpaAttribute = jpaAttribute;
     this.schema = schema;
@@ -229,14 +229,14 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
 
   void determineProtection() throws ODataJPAModelException {
     final EdmProtections jpaProtectinons = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-        .getAnnotation(EdmProtections.class);
+            .getAnnotation(EdmProtections.class);
     if (jpaProtectinons != null) {
       for (final EdmProtectedBy jpaProtectedBy : jpaProtectinons.value()) {
         determineOneProtection(jpaProtectedBy);
       }
     } else {
       final EdmProtectedBy jpaProtectedBy = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-          .getAnnotation(EdmProtectedBy.class);
+              .getAnnotation(EdmProtectedBy.class);
       if (jpaProtectedBy != null) {
         determineOneProtection(jpaProtectedBy);
       }
@@ -245,7 +245,7 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
 
   void determineSearchable() {
     final EdmSearchable jpaSearchable = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-        .getAnnotation(EdmSearchable.class);
+            .getAnnotation(EdmSearchable.class);
     if (jpaSearchable != null)
       searchable = true;
   }
@@ -271,13 +271,14 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
 
   FullQualifiedName getSimpleType() throws ODataJPAModelException {
     Class<?> javaType = null;
-    if (valueConverter != null) {
-      javaType = dbType;
-    } else {
-      javaType = entityType;
-    }
+//    MCD Do not want converter to produce binary data for spatial type in metadatamodel
+//    if (valueConverter != null) {
+//      javaType = dbType;
+//    } else {
+    javaType = entityType;
+//    }
     return JPATypeConvertor.convertToEdmSimpleType(javaType, jpaAttribute)
-        .getFullQualifiedName();
+            .getFullQualifiedName();
   }
 
   SRID getSRID() {
@@ -326,16 +327,16 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
         edmProperty.setDefaultValue(getDeafultValue());
         // TODO Attribute Unicode
         if (edmProperty.getTypeAsFQNObject().equals(EdmPrimitiveTypeKind.String.getFullQualifiedName())
-            || edmProperty.getTypeAsFQNObject().equals(EdmPrimitiveTypeKind.Binary.getFullQualifiedName())) {
+                || edmProperty.getTypeAsFQNObject().equals(EdmPrimitiveTypeKind.Binary.getFullQualifiedName())) {
           if (jpaColumn.length() > 0)
             edmProperty.setMaxLength(jpaColumn.length());
           if (isLob())
             edmProperty.setMaxLength(null);
         } else if (edmProperty.getType()
-            .equals(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName().toString())
-            || edmProperty.getType()
+                .equals(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName().toString())
+                || edmProperty.getType()
                 .equals(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName().toString())
-            || edmProperty.getType()
+                || edmProperty.getType()
                 .equals(EdmPrimitiveTypeKind.TimeOfDay.getFullQualifiedName().toString())) {
           // For a decimal property the value of this attribute specifies the maximum number of digits allowed in the
           // properties value; it MUST be a positive integer. If no value is specified, the decimal property has
@@ -345,11 +346,11 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
           if (jpaColumn.precision() > 0)
             edmProperty.setPrecision(jpaColumn.precision());
           else if (edmProperty.getType().equals(EdmPrimitiveTypeKind.DateTimeOffset.getFullQualifiedName().toString())
-              && jpaColumn.precision() == 0)
+                  && jpaColumn.precision() == 0)
             throw new ODataJPAModelException(ODataJPAModelException.MessageKeys.PROPERTY_MISSING_PRECISION,
-                jpaAttribute.getName());
+                    jpaAttribute.getName());
           if (edmProperty.getType().equals(EdmPrimitiveTypeKind.Decimal.getFullQualifiedName().toString())
-              && jpaColumn.scale() > 0)
+                  && jpaColumn.scale() > 0)
             edmProperty.setScale(jpaColumn.scale());
         }
       }
@@ -376,7 +377,7 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
 
   private void determineDBFieldName() {
     final Column jpaColunnDetails = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-        .getAnnotation(Column.class);
+            .getAnnotation(Column.class);
     if (jpaColunnDetails != null) {
       // TODO allow default name
       dbFieldName = jpaColunnDetails.name();
@@ -391,11 +392,11 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
   }
 
   /**
-   * 
+   *
    */
   private void determineFieldGroups() {
     final EdmVisibleFor jpaFieldGroups = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-        .getAnnotation(EdmVisibleFor.class);
+            .getAnnotation(EdmVisibleFor.class);
     if (jpaFieldGroups != null)
       fieldGroups = Arrays.stream(jpaFieldGroups.value()).collect(Collectors.toList());
     else
@@ -404,7 +405,7 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
 
   private void determineIgnore() {
     final EdmIgnore jpaIgnore = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-        .getAnnotation(EdmIgnore.class);
+            .getAnnotation(EdmIgnore.class);
     if (jpaIgnore != null) {
       this.setIgnore(true);
     }
@@ -412,7 +413,7 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
 
   private void determineInternalTypesFromConverter() throws ODataJPAModelException {
     final Convert jpaConverter = ((AnnotatedElement) this.jpaAttribute.getJavaMember())
-        .getAnnotation(Convert.class);
+            .getAnnotation(Convert.class);
     if (jpaConverter != null) {
       try {
         Type[] convType = jpaConverter.converter().getGenericInterfaces();
@@ -423,7 +424,7 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
           valueConverter = (AttributeConverter<?, ?>) jpaConverter.converter().newInstance();
       } catch (InstantiationException | IllegalAccessException e) {
         throw new ODataJPAModelException(
-            ODataJPAModelException.MessageKeys.TYPE_MAPPER_COULD_NOT_INSANTIATE, e);
+                ODataJPAModelException.MessageKeys.TYPE_MAPPER_COULD_NOT_INSANTIATE, e);
       }
     }
   }
@@ -440,14 +441,14 @@ abstract class IntermediateProperty extends IntermediateModelElement implements 
       String internalProtectedPath = jpaProtectedBy.path();
       if (internalProtectedPath.length() == 0) {
         throw new ODataJPAModelException(COMPLEX_PROPERTY_MISSING_PROTECTION_PATH, this.managedType.getJavaType()
-            .getCanonicalName(), this.internalName);
+                .getCanonicalName(), this.internalName);
       }
       externalNames.add(getExternalName() + JPAPath.PATH_SEPERATOR + convertPath(jpaProtectedBy.path()));
     } else {
       externalNames.add(getExternalName());
     }
     externalProtectedPathNames.put(protectionClaimName, new JPAProtectionInfo(externalNames, jpaProtectedBy
-        .wildcardSupported()));
+            .wildcardSupported()));
   }
 
   private boolean isLob() {
