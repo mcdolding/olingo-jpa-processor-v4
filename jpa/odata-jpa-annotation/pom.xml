@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.sap.olingo</groupId>
 		<artifactId>odata-jpa</artifactId>
-		<version>0.3.7-mcd-1</version>
+		<version>0.3.7-mcd-2-SNAPSHOT</version>
 	</parent>
 	<artifactId>odata-jpa-annotation</artifactId>
 	<name>odata-jpa-annotation</name>
